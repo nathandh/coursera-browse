@@ -1,0 +1,136 @@
+html {
+	overflow-y: scroll;
+	overflow: -moz-scrollbars-vertical;
+	position: relative;
+}
+body {
+	min-width: 250px;
+	overflow-x: hidden;
+	background-color: #E0F8FF;
+	font-family: "Verdana", "Arial", sans-serif;
+}
+.button{
+	display: inline;
+	height: 60px;
+	width: 100px;
+	background: #B5C7D2;
+	/*#5F94B8;*/
+	border: 4px solif rgba(33, 65, 70, 0.65);
+
+	color: rgba(0, 0, 0, 0.85);
+	text-align: center;
+
+	background: linear-gradient(top, #34696f, #2f4f63);
+	border-radius: 15px;
+	box-shadow: 2 2px 0 #235257;
+	text-shadow: 0 1px 1px rgba(255, 255, 255, 0.1);
+}
+a.button:hover {
+	background: #3d7a80;
+	background: -webkit-linear-gradient(top, #3d7a80, #8DB8B8);
+	background: -moz-linear-gradient(top, #3d7a80, #8DB8B8);
+	background: -o-linear-gradient(top, #3d7a80, #8DB8B8);
+	background: -ms-linear-gradient(top, #3d7a80, #8DB8B8);
+	background: linear-gradient(top, #3d7a80, #8DB8B8);
+}	  
+img {
+	/* images are scaled 416 x 312 */
+	margin: 5px;
+	/* border: none; */
+	border: 2px solid black;
+	vertical-align: middle;
+	width: 95%;
+	height: 70%;
+}
+#img_small_courseraBrowse{
+	border: none;
+	margin: 2px;
+	width: 18px;
+	height:18px;
+	vertical-align: bottom;
+}
+#titleDiv {
+	text-align: center;
+	color: #42485E;
+	/*#8C9AA1;*/
+}
+#sub_titleDiv{
+	font-style: italic;
+	font-size: 14px;
+	font-weight: bold;
+	vertical-align: top;
+}
+#subTitle {
+	color: #1E2222;
+}
+#courseraDiv {
+	font-size: 16px
+}
+.course_icon {
+	width: 95%;
+	height: 85%;
+}
+.categoryNumCourses {
+	font-style: italic;
+	font-size: 12px;
+}
+.categoryAnchor {
+	text-decoration: none;
+}
+.categoryName{
+	text-decoration: underline;
+}
+.categcourse_univ_name{
+	font-size: 13px;
+	font-weight: bold;
+}
+.categcourse_univ_loc{
+	font-size: 11px;
+	font-style: italic;
+}
+.status_state_duration{
+	font-size: 14px;
+	text-align: left;
+}
+.status_state_duration td,th{
+	padding: 7px;
+	border-spacing: 5px;
+	border-collapse: separate;
+	text-align: left;
+	width: 25%;
+}
+.course_description{
+	font-size: 12px;
+}
+.course_about{
+	font-size: 12px;
+}
+.course_subhead{
+	text-decoration: underline;
+}
+.course_home_link{
+	font-size: 16px;
+	font-style: italic;
+	font-family: "Times New Roman","Georgia",serif;
+}
+.instructor_small_photo{
+	margin: 2px;
+	/* border: none; */
+	border: 1px solid black;
+	vertical-align: middle;
+	width: 95%;
+	height: 65%;		
+}
+.td_instructor_photo{
+	width: 95px;
+}
+.td_instructor_department{
+	font-style: italic;
+}
+.tbl_instructor_info{
+	font-size: 11px;
+	text-justify: auto;
+}
+.instructor_name{
+	font-size: 15px;
+}
