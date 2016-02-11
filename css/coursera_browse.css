@@ -34,13 +34,12 @@ a.button:hover {
 	background: linear-gradient(top, #3d7a80, #8DB8B8);
 }	  
 img {
-	/* images are scaled 416 x 312 */
+	/* images are scaled from original 416 x 312 */
 	margin: 5px;
-	/* border: none; */
 	border: 2px solid black;
 	vertical-align: middle;
-	width: 95%;
-	height: 70%;
+	width:235px;
+	height:200px;
 }
 #img_small_courseraBrowse{
 	border: none;
@@ -70,21 +69,21 @@ img {
 	width: 95%;
 	height: 85%;
 }
-.categoryNumCourses {
+.domainNumCourses {
 	font-style: italic;
 	font-size: 12px;
 }
-.categoryAnchor {
+.domainAnchor {
 	text-decoration: none;
 }
-.categoryName{
+.domainName{
 	text-decoration: underline;
 }
-.categcourse_univ_name{
+.domaincourse_partner_name{
 	font-size: 13px;
 	font-weight: bold;
 }
-.categcourse_univ_loc{
+.domaincourse_partner_loc{
 	font-size: 11px;
 	font-style: italic;
 }
@@ -101,6 +100,7 @@ img {
 }
 .course_description{
 	font-size: 12px;
+	max-width: 250px;
 }
 .course_about{
 	font-size: 12px;
@@ -113,13 +113,19 @@ img {
 	font-style: italic;
 	font-family: "Times New Roman","Georgia",serif;
 }
+
+.course_photo{
+	width:235px;
+	height:200px;
+}
+
 .instructor_small_photo{
 	margin: 2px;
 	/* border: none; */
 	border: 1px solid black;
 	vertical-align: middle;
-	width: 95%;
-	height: 65%;		
+	width: 148px;
+	height: 148px;		
 }
 .td_instructor_photo{
 	width: 95px;
@@ -133,4 +139,12 @@ img {
 }
 .instructor_name{
 	font-size: 15px;
+}
+
+#topTopAnchor {
+	float: left;
+}
+
+#next10 {
+	float: right;
 }

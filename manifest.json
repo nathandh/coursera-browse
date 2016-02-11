@@ -2,9 +2,8 @@
   "manifest_version": 2,
 
   "name": "CourseraBrowse",
-  "description": "Browse Coursera course offerings and information through a popup Chrome extension. 
-  				  No need to leave your current page!",
-  "version": "0.1.0",
+  "description": "Browse Coursera course offerings and information through a popup Chrome extension. No need to leave your current page!",
+  "version": "0.2.0",
    
   "background": {
 	"scripts": [
