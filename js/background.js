@@ -1,5 +1,5 @@
 /**
-CourseraBrowse v: 0.2.1	|	02/10/2016
+CourseraBrowse v: 0.2.2	|	02/11/2016
 ----------------------------------------------------------
 A Chrome Extension that allows browsing of Coursera course
 offerings utilizing the publicly available API:
@@ -42,6 +42,17 @@ version: 0.2.1	|	02/10/2016
 	: Fixed INSTALL/UPDATE issue with 			@nathandh
       clearing local storage to prevent
 	  potential extension load errors/problems
+
+version: 0.2.2	|	02/11/2016
+	: Added a catch for '0_last_domains' 		@nathandh
+	  response from background.js in order to
+	  ensure we call 'getAllDomains()' if we 
+	  lack domain data to populate the page.
+	: Implemented initial Course time
+	  functions to list when/if a course is
+	  in session or upcoming.
+	: General Bug Fixes
+	: Bootstrap Library support included
 **/
 "use strict";
 // Set to 'true' to output debug console.log messages
@@ -263,7 +274,7 @@ sending messages a bit easier in our program:
 **/
 chrome.extension.onConnect.addListener(function(port){
 	port.postMessage({notification:"background.js connecting for messaging..."});
-	port.postMessage({notification:"...CourseraBrowse ver: 0.2.1..."});	
+	port.postMessage({notification:"...CourseraBrowse ver: 0.2.2..."});	
 	port.onMessage.addListener(
 		function(msg) {		
 		port.postMessage({response:"Hello: Popup!"});
