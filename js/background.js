@@ -1,5 +1,5 @@
 /**
-CourseraBrowse v: 0.1.0	|	05/05/2014
+CourseraBrowse v: 0.2.0	|	02/10/2016
 ----------------------------------------------------------
 A Chrome Extension that allows browsing of Coursera course
 offerings utilizing the publicly available API:
@@ -32,7 +32,10 @@ passed back and forth in order to implement saving the browse state and
 creating a better user experience.
 
 version: 0.1.0	|	05/05/2014
-	: Initial implementation completed.		@nathandh
+	: Initial implementation completed.			@nathandh
+	
+version: 0.2.0	|	02/10/2016
+	: Adapted to latest Coursera API changes	@nathandh
 **/
 
 // Used to save our state and scroll position
@@ -43,8 +46,11 @@ var browse_state = [];
 // Used to save our attached link listeners
 var link_listeners = [];
 
-// Used to save our last Coursera categories retrieved
-var last_categories = [];
+// Used to save our last Coursera domains retrieved
+var last_domains = [];
+
+// Used to save our last Pagination browse state
+var pagination_state = [];
 
 // For Chrome messaging
 // see: https://developer.chrome.com/extensions/messaging
@@ -143,15 +149,15 @@ var chromeStorage = {
 	},
 	
 	/**
-	Attempts to GET our last_categories from chrome.storage.local, if exists
+	Attempts to GET our last_domains from chrome.storage.local, if exists
 	**/
-	getLastCategories: function(callback){
+	getLastDomains: function(callback){
 		try{
 			chrome.storage.local.get(
-				'stored_lastCategories',
-				function(category_data){						
+				'stored_lastDomains',
+				function(domain_data){						
 					// just return our saved data for processing below
-					callback(category_data);
+					callback(domain_data);
 				}
 			);
 		} catch (e){
@@ -160,21 +166,72 @@ var chromeStorage = {
 	},	
 
 	/**
-	Attempts to SET our last_categories to chrome.storage.local
+	Attempts to SET our last_domains to chrome.storage.local
 	**/
-	setLastCategories: function(category_data){
+	setLastDomains: function(domain_data){
 		try{
-			console.log("SET-LAST-CATEGORIES: " + category_data);
+			console.log("SET-LAST-DOMAINS: " + domain_data);
 			chrome.storage.local.set(
-			{'stored_lastCategories':category_data},
+			{'stored_lastDomains':domain_data},
 			function(){
-				console.log("Saving category_data...");
-				console.log('category_data was saved to "stored_lastCategories" as: ' + category_data);
+				console.log("Saving domain_data...");
+				console.log('domain_data was saved to "stored_lastDomains" as: ' + domain_data);
 			});	
 		} catch (e){
 			console.log("Failure SETTING storage: " + e);
 		}
-	}	
+	},
+
+	/**
+	Attempts to GET our pagination_state from chrome.storage.local, if exists
+	**/
+	getPaginationState: function(callback){
+		try{
+			chrome.storage.local.get(
+				'stored_paginationState',
+				function(pagination_data){						
+					// just return our saved data for processing below
+					callback(pagination_data);
+				}
+			);
+		} catch (e){
+			console.log("Failure GETTING storage: " + e);	
+		}
+	},	
+
+	/**
+	Attempts to SET our pagination_data to chrome.storage.local
+	**/
+	setPaginationState: function(pagination_data){
+		try{
+			console.log("SET-PAGINATION-STATE: " + pagination_data);
+			chrome.storage.local.set(
+			{'stored_paginationState':pagination_data},
+			function(){
+				console.log("Saving pagination_data...");
+				console.log('pagination_data was saved to "stored_paginationState" as: ' + pagination_data);
+			});	
+		} catch (e){
+			console.log("Failure SETTING storage: " + e);
+		}
+	},
+
+	/** 
+	RESETS our pagination_data and state on chrome.storage.local
+	**/
+	resetPaginationState: function(pagination_data){
+		try{
+			console.log("RESET-PAGINATION-STATE: " + pagination_data);
+			chrome.storage.local.set(
+			{'stored_paginationState':pagination_data},
+			function(){
+				console.log("Resetting pagination data...");
+				console.log('pagination_data was saved to "stored_paginationState" as: ' + pagination_data);
+			});
+		} catch (e){
+			console.log("Failure RESETTING pagination_data in storage: " + e);
+		}
+	}
 };
 
 // Messaging implementation is here.
@@ -192,11 +249,12 @@ sending messages a bit easier in our program:
 	4) acknowledge
 	5) browseState
 	6) linkListeners
-	7) lastCategories
+	7) lastDomains
+	8) paginationState		// @nathandh - Added 02/10/2016
 **/
 chrome.extension.onConnect.addListener(function(port){
 	port.postMessage({notification:"background.js connecting for messaging..."});
-	port.postMessage({notification:"...CourseraBrowse ver: 0.1.0..."})	
+	port.postMessage({notification:"...CourseraBrowse ver: 0.2.0..."})	
 	port.onMessage.addListener(
 		function(msg) {		
 		port.postMessage({response:"Hello: Popup!"});
@@ -220,12 +278,30 @@ chrome.extension.onConnect.addListener(function(port){
 						function(last_browseState){
 							console.log(last_browseState);
 							if (typeof(last_browseState) == "undefined" || last_browseState == null || last_browseState.hasOwnProperty('stored_browseState') == false){
+								// We need to 1st reset our pagination_state to avoid errors
+								pagination_state[0] = [];
+								// RESET our pagination state, calling internal function
+								chromeStorage.resetPaginationState(pagination_state[0]);
+								
+								// Send 0 browse state message
 								port.postMessage({response:"0_browse_state"});
 							} else {
 								console.log("LAST BROWSE state returned is: " + last_browseState);
 								if(typeof(last_browseState.stored_browseState.courseraDiv) == "undefined"){
+									// We need to 1st reset our pagination_state to avoid errors
+									pagination_state[0] = [];
+									// RESET our pagination state, calling internal function
+									chromeStorage.resetPaginationState(pagination_state[0]);
+									
+									// Send 0 browse state message
 									port.postMessage({response:"0_browse_state"})
 								} else if (last_browseState.stored_browseState.courseraDiv.length == 0){
+									// We need to 1st reset our pagination_state to avoid errors
+									pagination_state[0] = [];
+									// RESET our pagination state, calling internal function
+									chromeStorage.resetPaginationState(pagination_state[0]);
+									
+									// Send 0 browse state message
 									port.postMessage({response:"0_browse_state"})
 								} else {
 									// Send our storage back to coursera_browse.js to append to page DIV
@@ -267,36 +343,65 @@ chrome.extension.onConnect.addListener(function(port){
 							}
 		
 					});				
-				} else if (msg[key] == "last_categories"){
-					// We have a REQUEST for our LAST CATEGORIES
-					console.log("...acting on LAST_CATEGORIES request....");
+				} else if (msg[key] == "last_domains"){
+					// We have a REQUEST for our LAST DOMAINS
+					console.log("...acting on LAST_DOMAINS request....");
 					
 					// See if we have some synced data available in storage
 					/**
-						getLastCategories()'s callback function handles our reply
+						getLastDomains()'s callback function handles our reply
 						and determines how we load our popup
 					**/
-					chromeStorage.getLastCategories(
-						function(last_categoriesState){
-							console.log(last_categoriesState);
-							if (typeof(last_categoriesState) == "undefined" || last_categoriesState == null || last_categoriesState.hasOwnProperty('stored_lastCategories') == false){
-								port.postMessage({response:"0_last_categories"});
+					chromeStorage.getLastDomains(
+						function(last_domainsState){
+							console.log(last_domainsState);
+							if (typeof(last_domainsState) == "undefined" || last_domainsState == null || last_domainsState.hasOwnProperty('stored_lastDomains') == false){
+								port.postMessage({response:"0_last_domains"});
 							} else {
-								console.log("LAST CATEGORIES returned is: " + last_categoriesState);
-								if(typeof(last_categoriesState.stored_lastCategories) == "undefined"){
-									port.postMessage({response:"0_last_categories"})
-								} else if (last_categoriesState.stored_lastCategories.length == 0){
-									port.postMessage({response:"0_last_categories"})
+								console.log("LAST DOMAINS returned is: " + last_domainsState);
+								if(typeof(last_domainsState.stored_lastDomains) == "undefined"){
+									port.postMessage({response:"0_last_domains"});
+								} else if (last_domainsState.stored_lastDomains.length == 0){
+									port.postMessage({response:"0_last_domains"});
 								} else {
 									// Send our storage back to coursera_browse.js to use
-									console.log("Replying with lastCategories contents from storage....");
-									var state_msg = JSON.stringify(last_categoriesState.stored_lastCategories)
+									console.log("Replying with lastDomains contents from storage....");
+									var state_msg = JSON.stringify(last_domainsState.stored_lastDomains);
 									//console.log(state_msg);
-									port.postMessage({lastCategoriesUpdate:state_msg});
+									port.postMessage({lastDomainsUpdate:state_msg});
 								}											
 							}
 		
 					});	
+				} else if (msg[key] == "pagination_state"){
+					// We have a REQUEST for our PAGINATION state
+					console.log("...acting on PAGINATION_STATE request....");
+					
+					// See if we have some synced data available in storage
+					/**
+						getPaginationState()'s callback function handles our reply
+						and determines how we load our popup
+					**/
+					chromeStorage.getPaginationState(
+						function(last_paginationState){
+							console.log(last_paginationState);
+							if (typeof(last_paginationState) == "undefined" || last_paginationState == null || last_paginationState.hasOwnProperty('stored_paginationState') == false){
+								port.postMessage({response:"0_pagination_state"});
+							} else {
+								console.log("LAST PAGINATION STATE returned is: " + last_paginationState);
+								if (typeof(last_paginationState.stored_paginationState) == "undefined"){
+									port.postMessage({response:"0_pagination_state"});
+								} else if (last_paginationState.stored_paginationState.length == 0){
+									port.postMessage({response:"0_pagination_state"});
+								} else {
+									// Send our storage back to coursera_browse.js to use
+									console.log("Replying with last_paginationState contents from storage....");
+									var state_msg = JSON.stringify(last_paginationState.stored_paginationState);
+									console.log(state_msg);
+									port.postMessage({paginationStateUpdate:state_msg});
+								}
+							}
+					});
 				}	
 			} else if (key == "response"){
 				// skip
@@ -310,10 +415,14 @@ chrome.extension.onConnect.addListener(function(port){
 				console.log("!^^^^background.js has recieved link_listeners message^^^^!");
 				link_listeners[0] = JSON.parse(msg[key]);
 				console.log("JSON parsed link_listeners msg: " + link_listeners[0]);
-			} else if (key = "lastCategories"){
-				console.log("!^^^^background.js has recieved last_categories message^^^^!");
-				last_categories[0] = JSON.parse(msg[key]);
-				console.log("JSON parsed last_categories msg: " + last_categories[0]);			
+			} else if (key == "lastDomains"){
+				console.log("!^^^^background.js has recieved last_domains message^^^^!");
+				last_domains[0] = JSON.parse(msg[key]);
+				console.log("JSON parsed last_domains msg: " + last_domains[0]);			
+			} else if (key == "paginationState"){
+				console.log("!****background.js has received pagination_state message****!");
+				pagination_state[0] = JSON.parse(msg[key]);
+				console.log("JSON parsed pagination_state msg: " + pagination_state[0]);
 			}
 		} 	
 	}); 
@@ -323,11 +432,13 @@ chrome.extension.onConnect.addListener(function(port){
 	port.onDisconnect.addListener(
 		function(){
 		console.log("background.js ...disconnecting...");
-		// Save our last categories, calling internal function
-		chromeStorage.setLastCategories(last_categories[0]);		
+		// Save our last domains, calling internal function
+		chromeStorage.setLastDomains(last_domains[0]);		
 		// Save our storage state, calling internal function
 		chromeStorage.setBrowseState(browse_state[0]);
-		// Save out linkListener state, calling internal function
+		// Save our linkListener state, calling internal function
 		chromeStorage.setLinkState(link_listeners[0]);
+		// Save our pagination state, calling internal function
+		chromeStorage.setPaginationState(pagination_state[0]);
 	});			
 });
