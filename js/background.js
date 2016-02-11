@@ -1,5 +1,5 @@
 /**
-CourseraBrowse v: 0.2.0	|	02/10/2016
+CourseraBrowse v: 0.2.1	|	02/10/2016
 ----------------------------------------------------------
 A Chrome Extension that allows browsing of Coursera course
 offerings utilizing the publicly available API:
@@ -36,6 +36,12 @@ version: 0.1.0	|	05/05/2014
 	
 version: 0.2.0	|	02/10/2016
 	: Adapted to latest Coursera API changes	@nathandh
+	: Initial paginanation support on browse	
+	
+version: 0.2.1	|	02/10/2016
+	: Fixed INSTALL/UPDATE issue with 			@nathandh
+      clearing local storage to prevent
+	  potential extension load errors/problems
 **/
 
 // Used to save our state and scroll position
@@ -254,7 +260,7 @@ sending messages a bit easier in our program:
 **/
 chrome.extension.onConnect.addListener(function(port){
 	port.postMessage({notification:"background.js connecting for messaging..."});
-	port.postMessage({notification:"...CourseraBrowse ver: 0.2.0..."})	
+	port.postMessage({notification:"...CourseraBrowse ver: 0.2.1..."});	
 	port.onMessage.addListener(
 		function(msg) {		
 		port.postMessage({response:"Hello: Popup!"});
@@ -282,6 +288,11 @@ chrome.extension.onConnect.addListener(function(port){
 								pagination_state[0] = [];
 								// RESET our pagination state, calling internal function
 								chromeStorage.resetPaginationState(pagination_state[0]);
+								// Clear our entire Local STORAGE
+								chrome.storage.local.clear(
+									function(){
+										console.log("Cleared local storage since we have 0_browse_state");
+								});
 								
 								// Send 0 browse state message
 								port.postMessage({response:"0_browse_state"});
@@ -292,6 +303,11 @@ chrome.extension.onConnect.addListener(function(port){
 									pagination_state[0] = [];
 									// RESET our pagination state, calling internal function
 									chromeStorage.resetPaginationState(pagination_state[0]);
+									// Clear our entire Local STORAGE
+									chrome.storage.local.clear(
+										function(){
+											console.log("Cleared local storage since we have 0_browse_state");
+									});
 									
 									// Send 0 browse state message
 									port.postMessage({response:"0_browse_state"})
@@ -300,6 +316,11 @@ chrome.extension.onConnect.addListener(function(port){
 									pagination_state[0] = [];
 									// RESET our pagination state, calling internal function
 									chromeStorage.resetPaginationState(pagination_state[0]);
+									// Clear our entire Local STORAGE
+									chrome.storage.local.clear(
+										function(){
+											console.log("Cleared local storage since we have 0_browse_state");
+									});
 									
 									// Send 0 browse state message
 									port.postMessage({response:"0_browse_state"})
@@ -441,4 +462,25 @@ chrome.extension.onConnect.addListener(function(port){
 		// Save our pagination state, calling internal function
 		chromeStorage.setPaginationState(pagination_state[0]);
 	});			
+});
+
+// ON First Install or Update, Clear local storage to prevent problems
+chrome.runtime.onInstalled.addListener(function(details){
+	if(details.reason == "install"){
+		// Clear our Local STORAGE to prevent INSTALL problems
+		chrome.storage.local.clear(
+			function(){
+				console.log("Cleared local storage since we are INSTALLING");
+				console.log("1st INSTALL of CourseraBrowse");
+		});
+	} else if (details.reason == "update"){
+		// Clear our Local STORAGE to prevent update problems
+		chrome.storage.local.clear(
+			function(){
+				console.log("Cleared local storage since we are UPDATING");
+				var currVersion = chrome.runtime.getManifest().version;
+				console.log("Updated from: " + details.previousVersion + " to: " + currVersion + " successfully :-)");
+		});
+	}
+	
 });
