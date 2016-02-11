@@ -1,5 +1,5 @@
 /**
-CourseraBrowse v: 0.2.1	|	02/10/2016
+CourseraBrowse v: 0.2.2	|	02/11/2016
 ----------------------------------------------------------
 A Chrome Extension that allows browsing of Coursera course
 offerings utilizing the publicly available API:
@@ -40,10 +40,24 @@ version: 0.2.1	|	02/10/2016
 	: Fixed INSTALL/UPDATE issue with 			@nathandh
       clearing local storage to prevent
 	  potential extension load errors/problems
+	  
+version: 0.2.2	|	02/11/2016
+	: Added a catch for '0_last_domains' 		@nathandh
+	  response from background.js in order to
+	  ensure we call 'getAllDomains()' if we 
+	  lack domain data to populate the page.
+	: Implemented initial Course time
+	  functions to list when/if a course is
+	  in session or upcoming.
+	: General Bug Fixes
+	: Bootstrap Library support included
 **/
+"use strict";
+// Set to 'true' to output debug console.log messages
+var $debug_ON = true;
 
 // Our communications port
-var port = chrome.extension.connect({name: "...CourseraBrowse ver: 0.2.1..."});
+var port = chrome.extension.connect({name: "...CourseraBrowse ver: 0.2.2..."});
 
 // A globals array of objects to store our retrieved DOMAIN values
 var domains = [];	// Previously was CATEGORIES
@@ -79,15 +93,15 @@ var link_listeners = {
 var courseraBrowse = {
 	
 	getPartnerDetails: function(partner_ids, callback, update_html){
-		console.log(partner_ids);
-		console.log("Getting Partner(s) details!");
+		$debug_ON && console.log(partner_ids);
+		$debug_ON && console.log("Getting Partner(s) details!");
 		
 		// case we got here through a click
 		event.preventDefault();
 		
 		var formatted_ids;
 		
-		console.log("Array length is: " + partner_ids.length);
+		$debug_ON && console.log("Array length is: " + partner_ids.length);
 		for (var i = 0; i < partner_ids.length; i++){
 			if (i == 0)
 				formatted_ids = partner_ids[0];
@@ -95,7 +109,7 @@ var courseraBrowse = {
 				formatted_ids += ',' + partner_ids[i];
 		}
 		
-		console.log("Formatted partner Ids: " + partner_ids);
+		$debug_ON && console.log("Formatted partner Ids: " + partner_ids);
 		
 		//Ajax request
 		var xhr = new XMLHttpRequest();
@@ -103,7 +117,7 @@ var courseraBrowse = {
 		name,description,banner,homeLink,location,classLogo,website,logo,squareLogo';
 		//TODO: Need to adjust to new api specs in future !important @nathandh - 02/10/2016 
 		
-		console.log(partnerURL);
+		$debug_ON && console.log(partnerURL);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4){ //request is done
@@ -118,7 +132,7 @@ var courseraBrowse = {
 		
 		xhr.onload = function (e){
 			var partner_json = xhr.response;
-			console.log(partner_json);
+			$debug_ON && console.log(partner_json);
 		}
 		
 		// Set correct header for form data
@@ -127,15 +141,15 @@ var courseraBrowse = {
 	},
 	
 	getInstructorDetails: function(instructor_ids, callback, update_html){
-		console.log(instructor_ids);
-		console.log("Getting Instructor(s) details!");
+		$debug_ON && console.log(instructor_ids);
+		$debug_ON && console.log("Getting Instructor(s) details!");
 		
 		// In case we got here through a click
 		event.preventDefault();
 		
 		var formatted_ids;
 		
-		console.log("Array length is: " + instructor_ids.length);
+		$debug_ON && console.log("Array length is: " + instructor_ids.length);
 		for (var i = 0; i < instructor_ids.length; i++){
 			if (i == 0)
 				formatted_ids = instructor_ids[0];
@@ -143,7 +157,7 @@ var courseraBrowse = {
 				formatted_ids += ',' + instructor_ids[i];
 		}
 		
-		console.log("Formatted instructor Ids: " + formatted_ids);
+		$debug_ON && console.log("Formatted instructor Ids: " + formatted_ids);
 		
 		//AJAX request
 		var xhr = new XMLHttpRequest();
@@ -151,7 +165,7 @@ var courseraBrowse = {
 		fields=photo,bio,fullName,firstName,middleName,lastName,title,department,website';
 		// *note: photo150 removed as does not return from latest API
 		
-		console.log(instructorURL);
+		$debug_ON && console.log(instructorURL);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4){ //request is done
@@ -166,7 +180,7 @@ var courseraBrowse = {
 		
 		xhr.onload = function (e){
 			var instructor_json = xhr.response;
-			console.log(instructor_json);
+			$debug_ON && console.log(instructor_json);
 		};
 		
 		// Set correct header for form data
@@ -175,8 +189,8 @@ var courseraBrowse = {
 	},
 	
 	getSessionDetails: function(course_slug, callback, update_html){
-		console.log(course_slug);
-		console.log("Getting Course Session details!");
+		$debug_ON && console.log(course_slug);
+		$debug_ON && console.log("Getting Course Session details!");
 		
 		// Incase we got here through a click
 		event.preventDefault();
@@ -184,7 +198,7 @@ var courseraBrowse = {
 		/** Deprecated for now
 		var formatted_ids;
 		
-		console.log("Array length is: " + session_ids.length);
+		$debug_ON && console.log("Array length is: " + session_ids.length);
 		for (var i = 0; i < session_ids.length; i++){
 			if (i === 0)
 				formatted_ids = session_ids[0];
@@ -193,10 +207,10 @@ var courseraBrowse = {
 			}
 		}
 		
-		console.log("Formatted session Ids: " + formatted_ids);
+		$debug_ON && console.log("Formatted session Ids: " + formatted_ids);
 		**/
 		
-		console.log("Course slug received is: " + course_slug);
+		$debug_ON && console.log("Course slug received is: " + course_slug);
 		
 		//AJAX request
 		var xhr = new XMLHttpRequest();
@@ -207,7 +221,7 @@ var courseraBrowse = {
 		status,active,startMonth,startDay,startYear,durationString';
 		**/
 		
-		console.log(sessionURL);
+		$debug_ON && console.log(sessionURL);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4){ //request is done
@@ -215,7 +229,7 @@ var courseraBrowse = {
 					callback.apply(xhr.response);
 				} 
 				if (xhr.status == 404){	//404 Not Found
-					console.log("...in 404 NOT found");
+					$debug_ON && console.log("...in 404 NOT found");
 					/** Not all Coursera courses cannot be looked up by SLUG id at this point. 
 						So getting any session data will fail automatically.
 						We should therefore, construct some standard data just to populate our page,
@@ -231,7 +245,7 @@ var courseraBrowse = {
 					callback.apply(standard_response);
 				}
 				if (xhr.status == 403){	//403 User not enrollable in course?
-					console.log("...in 403 Forbidden");
+					$debug_ON && console.log("...in 403 Forbidden");
 					/** Some Coursera Coursera give a 403 error when looked up by SLUG id at this point. 
 						So getting any session data will fail automatically.
 						We should therefore, construct some standard data just to populate our page,
@@ -254,7 +268,7 @@ var courseraBrowse = {
 		
 		xhr.onload = function (e){
 			var session_json = xhr.response;
-			console.log(session_json);
+			$debug_ON && console.log(session_json);
 		};
 		
 		// Set correct header for form data
@@ -263,17 +277,17 @@ var courseraBrowse = {
 	},
 
 	getCourseDetails: function(course_ids, callback, update_html) {
-		console.log(course_ids);
-		console.log("Getting Course details!");
+		$debug_ON && console.log(course_ids);
+		$debug_ON && console.log("Getting Course details!");
 		
 		// In case we got here through a click
 		event.preventDefault();	
 			
 		var formatted_ids; 
 			
-		console.log("Array length is: " + course_ids.length);	
+		$debug_ON && console.log("Array length is: " + course_ids.length);	
 		for (var i = 0; i < course_ids.length; i++){
-			console.log("In formatting loop....");
+			$debug_ON && console.log("In formatting loop....");
 			if (i === 0)
 				formatted_ids = course_ids[i];
 			else{
@@ -281,7 +295,7 @@ var courseraBrowse = {
 			}
 		}
 		
-		console.log("Formatted Ids: " + formatted_ids);
+		$debug_ON && console.log("Formatted Ids: " + formatted_ids);
 		
 		var xhr = new XMLHttpRequest();
 		var courseURL = 'https://api.coursera.org/api/courses.v1?ids=' + formatted_ids + '\
@@ -295,7 +309,7 @@ var courseraBrowse = {
 		name,description,slug,photoUrl,courseStatus,partnerIds,instructorIds
 		**/
 			
-		console.log(courseURL);
+		$debug_ON && console.log(courseURL);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4){ // request is done
@@ -310,11 +324,11 @@ var courseraBrowse = {
 		
 		xhr.onload = function (e){
 			var course_json = xhr.response;
-			console.log(course_json);
+			$debug_ON && console.log(course_json);
 
 			// Generate our SINGLE course detailed page
 			if (update_html == true){
-				console.log("Updating HTML in getCourseDetails()");
+				$debug_ON && console.log("Updating HTML in getCourseDetails()");
 				
 				// Place a navigation button to get back to ALL courses in a domain listing
 				$('#courseraDiv').html('<a id="btn_AllDomains" href="" class="button"><--All Domains</a>');
@@ -323,7 +337,7 @@ var courseraBrowse = {
 					event.preventDefault();
 					courseraBrowse.getAllDomains(
 						function(){
-							console.log("Got allDomains");
+							$debug_ON && console.log("Got allDomains");
 						}
 					);					
 				}, false);
@@ -337,7 +351,7 @@ var courseraBrowse = {
 					// This is deliberately a closure in order to get correct values in our addEventListener
 					// see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures			
 					(function () {	
-					console.log("Linked domain: " + course_json.elements[0].domainTypes[domain].domainId);
+					$debug_ON && console.log("Linked domain: " + course_json.elements[0].domainTypes[domain].domainId);
 					var linked_domain_id = course_json.elements[0].domainTypes[domain].domainId;
 					var linked_domain_name = course_json.elements[0].domainTypes[domain].domainId;
 					// Append our DIV to create navigation based on Domains
@@ -350,7 +364,7 @@ var courseraBrowse = {
 							courseraBrowse.getDomainCourses(
 								linked_domain_id,
 								function(){
-									console.log("...beginning...single DomainCourses XHR Request");
+									$debug_ON && console.log("...beginning...single DomainCourses XHR Request");
 									// we will do nothing else here, since we are updating HTML 
 									// in the 'onload' of our ajax request, as indicated by TRUE as follows 
 								}, true);
@@ -376,20 +390,20 @@ var courseraBrowse = {
 				for (var _instructor in course_json.linked["instructors.v1"]){
 					// Deliberate closure
 					(function(){
-						current_instructor = course_json.linked["instructors.v1"][_instructor];
-						console.log("Linked instructor: " + current_instructor.fullName);
+						var current_instructor = course_json.linked["instructors.v1"][_instructor];
+						$debug_ON && console.log("Linked instructor: " + current_instructor.fullName);
 						instructor_ids.push(current_instructor.id);
 					}())
 				}
 				
-				console.log("Instructor IDs: " + instructor_ids);
+				$debug_ON && console.log("Instructor IDs: " + instructor_ids);
 				
 				// Get Instructor Data with IDs
 				courseraBrowse.getInstructorDetails(
 					instructor_ids,
 					function(){
 						var instructor_json = this;
-						console.log("Instructor JSON received: " + JSON.stringify(instructor_json.elements));
+						$debug_ON && console.log("Instructor JSON received: " + JSON.stringify(instructor_json.elements));
 						
 						// Consruct our Instructor HTML
 						var instructorHTML;
@@ -406,7 +420,7 @@ var courseraBrowse = {
 								instructorHTML += '</td></tr></table>';
 						}
 						
-						console.log("InstructorHTML is: " + instructorHTML);
+						$debug_ON && console.log("InstructorHTML is: " + instructorHTML);
 						// Append out instructor Info to our COURSE Page
 						$('#instructors_info').append(instructorHTML);
 						
@@ -417,7 +431,7 @@ var courseraBrowse = {
 						
 						// Save our state and zero scroll position
 						browse_state[0] = {"courseraDiv":$('#courseraDiv').html(),"scrollTop":0};
-						console.log("==> browse_state after 'getCourseDetails().getInstructorDetails()' call: " + browse_state[0].courseraDiv);
+						$debug_ON && console.log("==> browse_state after 'getCourseDetails().getInstructorDetails()' call: " + browse_state[0].courseraDiv);
 						
 						// Sending updated state via messaging to background
 						var _browse_state = JSON.stringify(browse_state[0]);
@@ -431,7 +445,7 @@ var courseraBrowse = {
 					// Deliberate closure
 					(function(){
 						current_session = course_json.linked.sessions[session];
-						console.log("Linked session: " + current_session.homeLink);
+						$debug_ON && console.log("Linked session: " + current_session.homeLink);
 						session_ids.push(current_session.id);
 					}())
 				} **/
@@ -439,23 +453,23 @@ var courseraBrowse = {
 				// Get our SLUG associated with the course...
 				var course_slug = course_json.elements[0].slug;
 				
-				console.log("Course slug: " + course_slug);
+				$debug_ON && console.log("Course slug: " + course_slug);
 				// Get Session Data based on SLUG
 				courseraBrowse.getSessionDetails(
 					course_slug,
 					function(){
 						var session_json = this;
-						console.log("Session JSON received: " + JSON.stringify(session_json));
+						$debug_ON && console.log("Session JSON received: " + JSON.stringify(session_json));
 						
-						// Construct out Session HTML
+						// Construct our Session HTML
 						var sessionHTML;
 						for (var _session in session_json.elements){
 							//Deliberate closure
 							(function(){
 							var this_session = session_json.elements[_session];
-							// Helper variable for HTML
+							// Helper variables for HTML output
 							var session_id = _session+1	//this_session.id;
-							var session_start_date = this_session.launchedAt;
+							var session_start_date = getDateTime(this_session.launchedAt);
 							if (typeof(this_session.launchedAt) == "undefined")
 								session_start_date = "N/A";
 							var session_duration = "Ongoing"
@@ -495,7 +509,7 @@ var courseraBrowse = {
 
 						// Save our state and zero scroll position
 						browse_state[0] = {"courseraDiv":$('#courseraDiv').html(),"scrollTop":0};
-						console.log("==> browse_state after 'getCourseDetails()' call: " + browse_state[0].courseraDiv);
+						$debug_ON && console.log("==> browse_state after 'getCourseDetails()' call: " + browse_state[0].courseraDiv);
 						
 						// Sending updated state via messaging to background
 						var _browse_state = JSON.stringify(browse_state[0]);
@@ -503,7 +517,7 @@ var courseraBrowse = {
 
 						link_listeners.location = "getCategoryCourses";
 						// Test send our links
-						console.log("LINK Listeners" + link_listeners);
+						$debug_ON && console.log("LINK Listeners" + link_listeners);
 						var _link_listeners = JSON.stringify(link_listeners);
 						port.postMessage({linkListeners:_link_listeners});
 					}, false);
@@ -516,18 +530,18 @@ var courseraBrowse = {
 	},
 	
 	outputCourses: function(start, stop, num_pages, my_domain_courses, partner_ids, partner_course, link_listeners, callback){
-		console.log("START: " + start);
-		console.log("STOP: " + stop);
-		console.log("# of pages: " + num_pages);
-		console.log(my_domain_courses);
-		console.log(partner_ids);
-		console.log(partner_course);
-		console.log(link_listeners);
+		$debug_ON && console.log("START: " + start);
+		$debug_ON && console.log("STOP: " + stop);
+		$debug_ON && console.log("# of pages: " + num_pages);
+		$debug_ON && console.log(my_domain_courses);
+		$debug_ON && console.log(partner_ids);
+		$debug_ON && console.log(partner_course);
+		$debug_ON && console.log(link_listeners);
 		
 		// Set to globals
 		current_browse_pages = num_pages;
 		current_browse_page = Math.floor(Math.round((stop / browse_domain_limit) + ((browse_domain_limit / 2) - 1)/10));
-		console.log(current_browse_page);
+		$debug_ON && console.log(current_browse_page);
 		
 		var curr_courses_length;
 		
@@ -536,9 +550,9 @@ var courseraBrowse = {
 			// see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures			
 			(function () {		
 				curr_courses_length = my_domain_courses.length;
-				console.log("My_Domain_Courses length: " + my_domain_courses.length);
-				console.log('Current COURSE is: ' + my_domain_courses[i].name);
-				console.log(JSON.stringify(my_domain_courses[i]));
+				$debug_ON && console.log("My_Domain_Courses length: " + my_domain_courses.length);
+				$debug_ON && console.log('Current COURSE is: ' + my_domain_courses[i].name);
+				$debug_ON && console.log(JSON.stringify(my_domain_courses[i]));
 				
 				// Output our domain courses to the popup
 				$('#courseraDiv').append('<p><table id=tbl_course_' + my_domain_courses[i].id + '><tr><td><a id=course_' + my_domain_courses[i].id + ' href="">\
@@ -552,7 +566,7 @@ var courseraBrowse = {
 												
 				// Create new listener for onclick event of each anchor tag
 				var current_course_id = my_domain_courses[i].id;
-				console.log("Current COURSE ID is: " + current_course_id);
+				$debug_ON && console.log("Current COURSE ID is: " + current_course_id);
 				var link = document.getElementById('course_' + current_course_id);
 				var array_ccid = [current_course_id]; // since our getCourseDetails function relies on an array as an argument
 				// Add our links to our tracking array
@@ -561,7 +575,7 @@ var courseraBrowse = {
 					courseraBrowse.getCourseDetails(
 						array_ccid,
 						function(){
-							console.log("...beginning...single CourseDetails XHR Request");
+							$debug_ON && console.log("...beginning...single CourseDetails XHR Request");
 							// we will do nothing else here, since we are updating HTML 
 							// in the 'onload' of our ajax request, as indicated by TRUE as follows 
 						}, true);
@@ -603,25 +617,25 @@ var courseraBrowse = {
 					[], 
 					link_listeners, 
 					function(){
-						console.log("...Outputting next 10 courses...");
+						$debug_ON && console.log("...Outputting next 10 courses...");
 					});
 			}, false);
 			pagination_state.next_link[0] ={"start":start+browse_domain_limit,"stop":new_stop,"num_pages":current_browse_pages,"domain_courses":my_domain_courses, "partner_ids":[], "partner_course":[],"link_listeners": link_listeners, "callback": []};
 			// Send our pagination state to background
 			var _pagination_state = JSON.stringify(pagination_state);
-			console.log("Pagination State is: " + _pagination_state);
+			$debug_ON && console.log("Pagination State is: " + _pagination_state);
 			port.postMessage({paginationState:_pagination_state});
 			
 			// Save our state and zero scroll position
 			browse_state[0] = {"courseraDiv":$('#courseraDiv').html(),"scrollTop":0};
-			console.log("==> browse_state after 'getDomainCourses() next10 Pagination' call: " + browse_state[0].courseraDiv);
+			$debug_ON && console.log("==> browse_state after 'getDomainCourses() next10 Pagination' call: " + browse_state[0].courseraDiv);
 			
 			// Sending updated state via messaging to background
 			var _browse_state = JSON.stringify(browse_state[0]);
 			port.postMessage({browseState:_browse_state});	
 			
 			// Test send our links
-			console.log("LINK Listeners" + link_listeners);
+			$debug_ON && console.log("LINK Listeners" + link_listeners);
 			var _link_listeners = JSON.stringify(link_listeners);
 			port.postMessage({linkListeners:_link_listeners});	
 		}
@@ -631,22 +645,22 @@ var courseraBrowse = {
 			document.getElementById("toTopAnchor").click();
 		}
 		
-		console.log(partner_course);
+		$debug_ON && console.log(partner_course);
 		// Get and append our Partner Names to the page
 		courseraBrowse.getPartnerDetails(
 			partner_ids,
 			function(){
-				console.log("...beginning...Partner lookup in getDomainCourses()");
-				partner_json = this;
+				$debug_ON && console.log("...beginning...Partner lookup in getDomainCourses()");
+				var partner_json = this;
 				
 				for(var partner in partner_json.elements){
 					var current_partner = partner_json.elements[partner];
 					// Append our HTML with some Partner information
 					// for each course in the Domain
-					partner_html = '<table><tr><td class="domaincourse_partner_name">' + current_partner.name + '</td></tr><tr><td class="domaincourse_partner_loc">' + current_partner.location + '</td></tr></table>';
-					console.log(partner_html);
-					for(_partner_course in partner_course){
-						curr_partner_course = partner_course[_partner_course];
+					var partner_html = '<table><tr><td class="domaincourse_partner_name">' + current_partner.name + '</td></tr><tr><td class="domaincourse_partner_loc">' + current_partner.location + '</td></tr></table>';
+					$debug_ON && console.log(partner_html);
+					for(var _partner_course in partner_course){
+						var curr_partner_course = partner_course[_partner_course];
 						if(curr_partner_course.partner_id == current_partner.id){
 							// Append our Partner information
 							$('#partner_' + current_partner.id + '_' + curr_partner_course.course_id).append(partner_html);
@@ -656,14 +670,14 @@ var courseraBrowse = {
 				
 				// Save our state and zero scroll position
 				browse_state[0] = {"courseraDiv":$('#courseraDiv').html(),"scrollTop":0};
-				console.log("==> browse_state after 1st 'outputCourses()' call: " + browse_state[0].courseraDiv);
+				$debug_ON && console.log("==> browse_state after 1st 'outputCourses()' call: " + browse_state[0].courseraDiv);
 				
 				// Sending updated state via messaging to background
 				var _browse_state = JSON.stringify(browse_state[0]);
 				port.postMessage({browseState:_browse_state});	
 				
 				// Test send our links
-				console.log("LINK Listeners" + link_listeners);
+				$debug_ON && console.log("LINK Listeners" + link_listeners);
 				var _link_listeners = JSON.stringify(link_listeners);
 				port.postMessage({linkListeners:_link_listeners});
 			}, false);		
@@ -676,13 +690,13 @@ var courseraBrowse = {
 		// First let's get our domain name given the passed ID
 		for (var domain in domains){
 			if (domains[domain].id == domain_id){
-				console.log("FOUND");
+				$debug_ON && console.log("FOUND");
 				browse_domain = domains[domain].name;
 				browse_domain_id = domains[domain].id;
 				break;
 			}
 			else
-				console.log("...still LOOKING...");
+				$debug_ON && console.log("...still LOOKING...");
 		}
 		 
 		coursesTotal = 0;	// Reset Courses Total
@@ -705,7 +719,7 @@ var courseraBrowse = {
 		// array to hold and sort out courses
 		var courses = [];
 		
-		console.log(domainCoursesURL);
+		$debug_ON && console.log(domainCoursesURL);
 		
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState == 4){ // request is done
@@ -720,7 +734,7 @@ var courseraBrowse = {
 		
 		xhr.onload = function (e){
 			var domains_courses_json = xhr.response;
-			console.log(domains_courses_json);
+			$debug_ON && console.log(domains_courses_json);
 			
 			domain_courses_total = domains_courses_json.linked["courses.v1"].length;
 			browse_domain_current_page += 1;	//Increment Current page count
@@ -729,15 +743,15 @@ var courseraBrowse = {
 			}
 			
 			// Debugging output
-			console.log("####################################");
-			console.log("Courses Total is: " + coursesTotal);
-			console.log("Domain Courses Total is: " + domain_courses_total);
-			console.log("Pages (of 10) needed to get all courses is: " + browse_domain_pages);
-			console.log("####################################");
+			$debug_ON && console.log("####################################");
+			$debug_ON && console.log("Courses Total is: " + coursesTotal);
+			$debug_ON && console.log("Domain Courses Total is: " + domain_courses_total);
+			$debug_ON && console.log("Pages (of 10) needed to get all courses is: " + browse_domain_pages);
+			$debug_ON && console.log("####################################");
 			
 			// We generate and output our HTML for Domain Courses
 			if (update_html == true){
-				console.log("Updating HTML in getDomainCourses()");
+				$debug_ON && console.log("Updating HTML in getDomainCourses()");
 				
 				//$('#courseraDiv').hide();
 				// couse_ids is used so we can grab extra data for each course
@@ -747,7 +761,7 @@ var courseraBrowse = {
 					var courseStatus, courseType, description, id, name, partnerIds, photoUrl, slug;
 					for (var key in current_course){
 						if (current_course.hasOwnProperty(key)){
-							//console.log("Key is: " + key);
+							//$debug_ON && console.log("Key is: " + key);
 							if (key == "courseStatus")
 								courseStatus = current_course[key];
 							else if (key == "courseType")
@@ -790,7 +804,7 @@ var courseraBrowse = {
 					try{
 						initial_course_ids.push(course_ids[i]);
 					} catch (e){
-						console.log("Error: " + e);
+						$debug_ON && console.log("Error: " + e);
 					}
 				}
 				*/
@@ -799,7 +813,7 @@ var courseraBrowse = {
 					function(){
 						// 'this' is set in the called funtion xhr above, 
 						// it is the responce of the callback
-						console.log(this);
+						$debug_ON && console.log(this);
 						var courses_json = this;
 
 						var linked_instructors = courses_json.linked["instructors.v1"];
@@ -809,8 +823,8 @@ var courseraBrowse = {
 							for (var _course in courses){
 								var _current_course = courses[_course];
 								if (current_course.id == _current_course.id){
-									console.log(current_course.id  + "/" + _current_course.id);
-									console.log("We have matched our course!");
+									$debug_ON && console.log(current_course.id  + "/" + _current_course.id);
+									$debug_ON && console.log("We have matched our course!");
 									// Update courses with extra course data
 									var partners_squareLogo, partners_rectangularLogo, partners_classLogo, partners_logo, partners_shortName;
 									var instructorIds 
@@ -821,10 +835,10 @@ var courseraBrowse = {
 									};
 									for (var key in current_course){
 										if (current_course.hasOwnProperty(key)){
-											console.log("Key is: " + key);
+											$debug_ON && console.log("Key is: " + key);
 											if (key == "instructorIds"){
 												instructorIds = current_course[key];
-												console.log("Course: " + courses[_course].name);
+												$debug_ON && console.log("Course: " + courses[_course].name);
 												courses[_course].instructorIds = instructorIds;
 											} else if (key == "primaryLanguages"){
 												primaryLanguages = current_course[key];
@@ -843,20 +857,20 @@ var courseraBrowse = {
 									// Add our partner Fields information
 									for (var index in linked_instructors){
 										var instructor = linked_instructors[index];
-										console.log("Examining Instructor:" + JSON.stringify(instructor));
+										$debug_ON && console.log("Examining Instructor:" + JSON.stringify(instructor));
 										for (var key in instructor){
 											if (instructor.hasOwnProperty(key)){
-												console.log("Instructor Key is: " + key);
+												$debug_ON && console.log("Instructor Key is: " + key);
 												if (key == "id"){
 													// Check association with current Instructor IDs in course
 													for (instructor_idx in courses[_course].instructorIds){
 														var course_instructor = courses[_course].instructorIds[instructor_idx];
-														console.log("Comparing course instructor ID of: " + course_instructor);
-														console.log("Compared to: " + instructor[key] + "\n\n");
+														$debug_ON && console.log("Comparing course instructor ID of: " + course_instructor);
+														$debug_ON && console.log("Compared to: " + instructor[key] + "\n\n");
 														if (course_instructor === instructor[key]){
-															console.log("INSTRUCTOR Match found!")
+															$debug_ON && console.log("INSTRUCTOR Match found!")
 															courses[_course].linked["instructors.v1"].push(instructor);
-															console.log("Course instructors updated to: " + JSON.stringify(courses[_course].linked["instructors.v1"]));
+															$debug_ON && console.log("Course instructors updated to: " + JSON.stringify(courses[_course].linked["instructors.v1"]));
 														}
 													}
 												}
@@ -888,7 +902,7 @@ var courseraBrowse = {
 				var _browse_domain_id = browse_domain_id.replace(/-/g,"");	// Strip hyphens from domain_id if they exist
 				window['courses_' + _browse_domain_id] = courses;
 				var domain_courses = window['courses_' + _browse_domain_id];
-				console.log("Setting courses to global domain course variable: " + 'courses_'+_browse_domain_id);
+				$debug_ON && console.log("Setting courses to global domain course variable: " + 'courses_'+_browse_domain_id);
 				
 				// Place a navigation button to get back to ALL domains screen
 				$('#courseraDiv').html('<a id="btn_AllDomains" href="" class="button"><--All Domains</a>');
@@ -897,7 +911,7 @@ var courseraBrowse = {
 					event.preventDefault();
 					courseraBrowse.getAllDomains(
 						function(){
-							console.log("Got allDomains");
+							$debug_ON && console.log("Got allDomains");
 						}
 					);							
 				}, false);
@@ -918,19 +932,19 @@ var courseraBrowse = {
 											browse_domain_limit, browse_domain_pages, window['courses_' + _browse_domain_id], 
 											partner_ids,partner_course, link_listeners,
 											function(){
-												console.log("...Outputting 1st 10 courses...");
+												$debug_ON && console.log("...Outputting 1st 10 courses...");
 											}); 
 				
 				// Save our state and zero scroll position
 				browse_state[0] = {"courseraDiv":$('#courseraDiv').html(),"scrollTop":0};
-				console.log("==> browse_state after 'getDomainCourses()' call: " + browse_state[0].courseraDiv);
+				$debug_ON && console.log("==> browse_state after 'getDomainCourses()' call: " + browse_state[0].courseraDiv);
 				
 				// Sending updated state via messaging to background
 				var _browse_state = JSON.stringify(browse_state[0]);
 				port.postMessage({browseState:_browse_state});	
 				
 				// Test send our links
-				console.log("LINK Listeners" + link_listeners);
+				$debug_ON && console.log("LINK Listeners" + link_listeners);
 				var _link_listeners = JSON.stringify(link_listeners);
 				port.postMessage({linkListeners:_link_listeners});					
 			}
@@ -943,10 +957,10 @@ var courseraBrowse = {
 
 	getAllDomains: function(callback) {
 		/*
-		console.log("...TESTING: getting allCourses 1st");
+		$debug_ON && console.log("...TESTING: getting allCourses 1st");
 		courseraBrowse.getAllCourses(
 			function(){
-				console.log("Got allCourses");
+				$debug_ON && console.log("Got allCourses");
 			}, 0	// 0 indicates start at 1st course in API
 		);
 		
@@ -954,7 +968,7 @@ var courseraBrowse = {
 		*/
 		
 	
-		console.log("...inside getAllDomains!");
+		$debug_ON && console.log("...inside getAllDomains!");
 				
 		var xhr = new XMLHttpRequest();
 		var allDomainsURL = "https://www.coursera.org/api/domains.v1?&fields=backgroundImageUrl";
@@ -973,7 +987,7 @@ var courseraBrowse = {
 		xhr.onload = function(e){
 			var domains_json = xhr.response;
 			
-			console.log(domains_json);
+			$debug_ON && console.log(domains_json);
 			
 			$('#courseraDiv').html("");
 			//$('#courseraDiv').hide();
@@ -1031,7 +1045,7 @@ var courseraBrowse = {
 				// This is deliberately a closure in order to get correct values in our addEventListener
 				// see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures
 				(function () {
-					console.log('Current DOMAIN is: ' + domains[i].name);
+					$debug_ON && console.log('Current DOMAIN is: ' + domains[i].name);
 					
 					// Creative Commons images for our Domains
 					var img_src;
@@ -1073,12 +1087,12 @@ var courseraBrowse = {
 							var domain_num_courses = _courses_json.linked["courses.v1"].length;
 							// Update coursesTotal
 							coursesTotal += domain_num_courses;
-							console.log("Courses length: " + domain_num_courses);
+							$debug_ON && console.log("Courses length: " + domain_num_courses);
 							$('#domain_' + _num_domain_id + '_numCourses').append('<strong>' + domain_num_courses + '</strong> total courses');
 						
 							// Save our browse state and zero scroll position
 							browse_state[0] = {"courseraDiv":$('#courseraDiv').html(),"scrollTop":0};
-							console.log("==> browse_state after 'getAllDomains()' call: " + browse_state[0].courseraDiv);
+							$debug_ON && console.log("==> browse_state after 'getAllDomains()' call: " + browse_state[0].courseraDiv);
 							
 							// Sending updated state via messaging to background
 							var _browse_state = JSON.stringify(browse_state[0]);
@@ -1087,7 +1101,7 @@ var courseraBrowse = {
 					
 					// Create new listener for onclick event of anchor tag
 					var current_id = domains[i].id;
-					console.log("Current ID is: " + current_id);
+					$debug_ON && console.log("Current ID is: " + current_id);
 					var link = document.getElementById('domain_' + current_id);
 					// Add our links to our tracking array
 					link_listeners.links_ids.push({_link:'domain_'+current_id,_current_id:current_id}); 
@@ -1095,7 +1109,7 @@ var courseraBrowse = {
 						courseraBrowse.getDomainCourses(
 							current_id,
 							function(){
-								console.log("...beginning...single DomainCourses XHR Request");
+								$debug_ON && console.log("...beginning...single DomainCourses XHR Request");
 								// we will do nothing else here, since we are updating HTML 
 								// in the 'onload' of our ajax request, as indicated by TRUE as follows 
 							}, true);
@@ -1110,12 +1124,12 @@ var courseraBrowse = {
 			document.getElementById("toTopAnchor").click();
 			
 			// Save and Send our updated Domains via messaging to background
-			_last_domains = JSON.stringify(domains);
+			var _last_domains = JSON.stringify(domains);
 			port.postMessage({lastDomains:_last_domains});			
 						
 			// Save our browse state and zero scroll position
 			browse_state[0] = {"courseraDiv":$('#courseraDiv').html(),"scrollTop":0};
-			console.log("==> browse_state after 'getAllDomains()' call: " + browse_state[0].courseraDiv);
+			$debug_ON && console.log("==> browse_state after 'getAllDomains()' call: " + browse_state[0].courseraDiv);
 			
 			// Sending updated state via messaging to background
 			var _browse_state = JSON.stringify(browse_state[0]);
@@ -1123,7 +1137,7 @@ var courseraBrowse = {
 			
 			link_listeners.location = "getDomainCourses";
 			// Test send our links
-			console.log("LINK Listeners" + link_listeners);
+			$debug_ON && console.log("LINK Listeners" + link_listeners);
 			var _link_listeners = JSON.stringify(link_listeners);
 			port.postMessage({linkListeners:_link_listeners});
 		};
@@ -1133,26 +1147,26 @@ var courseraBrowse = {
 	},
 	
 	updateLinkListeners: function (links, callback){
-		console.log("...Updating link listeners on page....");
-		console.log(links[0].location);
-		
+		$debug_ON && console.log("...Updating link listeners on page....");
+		$debug_ON && console.log(links[0].location);
+		console.log(links);
 		// First ATTEMPT to restore our ALL Domains link to get back to the main domain page:
 		// this will fail on MAIN page since we don't have our btn_AllDomains yet on the page
 		try {
 			(function (){
 				var btn_all_domains = document.getElementById("btn_AllDomains");
-				console.log("Button element is: " + btn_all_domains);
+				$debug_ON && console.log("Button element is: " + btn_all_domains);
 				btn_all_domains.addEventListener("click", function(){
 					event.preventDefault();
 					courseraBrowse.getAllDomains(
 						function(){
-							console.log("Got allDomains");
+							$debug_ON && console.log("Got allDomains");
 						}
 					);
 				}, false);	
 			}())
 		} catch (e){
-			console.log("Error: " + e);
+			$debug_ON && console.log("Error: " + e);
 		}
 				
 		// Restore remaining links on the page
@@ -1162,13 +1176,13 @@ var courseraBrowse = {
 			(function (){
 				var current_link = document.getElementById(links[0].links_ids[link_obj]._link);
 				var current_id = links[0].links_ids[link_obj]._current_id;
-				console.log("Activating link: " + links[0].links_ids[link_obj]._link + " with current_id of: " + current_id);
+				$debug_ON && console.log("Activating link: " + links[0].links_ids[link_obj]._link + " with current_id of: " + current_id);
 				if (location == "getDomainCourses"){
 					current_link.addEventListener("click", function(){
 						courseraBrowse.getDomainCourses(
 							current_id,
 							function(){
-								console.log("...beginning...single DomainCourses XHR Request");
+								$debug_ON && console.log("...beginning...single DomainCourses XHR Request");
 								// we will do nothing else here, since we are updating HTML 
 								// in the 'onload' of our ajax request, as indicated by TRUE as follows 
 							}, true);
@@ -1179,7 +1193,7 @@ var courseraBrowse = {
 						courseraBrowse.getCourseDetails(
 							array_ccid,
 							function(){
-								console.log("...beginning...single CourseDetails XHR Request");
+								$debug_ON && console.log("...beginning...single CourseDetails XHR Request");
 								// we will do nothing else here, since we are updating HTML 
 								// in the 'onload' of our ajax request, as indicated by TRUE as follows 
 							}, true);	
@@ -1191,13 +1205,13 @@ var courseraBrowse = {
 	},
 	
 	updatePaginationState: function (state, callback){
-		console.log("...in updatePaginationState...");
-		//console.log("state is: " + JSON.stringify(state));
-		console.log("Start is: " + state.next_link[0].next_link[0].start);	// Perhaps clean formatting of object later, but we have data for now!
+		$debug_ON && console.log("...in updatePaginationState...");
+		//$debug_ON && console.log("state is: " + JSON.stringify(state));
+		$debug_ON && console.log("Start is: " + state.next_link[0].next_link[0].start);	// Perhaps clean formatting of object later, but we have data for now!
 		
 		try {
 			// Activate Next10 Link to default for pagination
-			next10_link = document.getElementById('course_next10');
+			var next10_link = document.getElementById('course_next10');
 			next10_link.addEventListener("click", function(){
 				courseraBrowse.outputCourses(
 					state.next_link[0].next_link[0].start,
@@ -1208,11 +1222,11 @@ var courseraBrowse = {
 					state.next_link[0].next_link[0].partner_ids, 
 					state.next_link[0].next_link[0].link_listeners, 
 					function(){
-						console.log("...Outputting next 10 courses...");
+						$debug_ON && console.log("...Outputting next 10 courses...");
 					});
 			}, false);
 		} catch (e){
-			console.log("Error: " + e);
+			$debug_ON && console.log("Error: " + e);
 		}
 		
 		callback(0);
@@ -1220,29 +1234,55 @@ var courseraBrowse = {
 };
 
 /** Helper functions *
-	Currently NONE are used in latest Iteration
+	Currently ONLY getDateTime() is used in latest Iteration
 	Keeping, for potential future use
-	@nathadh 02.10.2016
+	@nathadh 02.11.2016
 **/
+function getDateTime(timestamp){
+	// Our return variable
+	var formatted_date;
+	
+	if (timestamp === "N/A"){
+		// Just return our timestamp AS-IS, since its just placeholder text
+		formatted_date = timestamp; 
+	} else {
+		$debug_ON && console.log("getDateTime called...");
+		var date = new Date(timestamp);	// to get milliseconds ouput
+		// Get our Hours, Minutes, Seconds
+		var hours = date.getUTCHours();
+		var minutes = date.getUTCMinutes();
+		var seconds = date.getUTCSeconds();
+		
+		// Get our Day, Month, Year
+		var year = date.getUTCFullYear();
+		var month = date.getUTCMonth();
+		var day = date.getUTCDate();
+		
+		// Format our date
+		formatted_date = month + '/' + day + '/' + year + '/' + ' ' + hours + ':' + minutes + ':' + seconds;
+	}
+	// Return our result
+	return formatted_date;
+}
 function containsDomain(domain, list){
-	console.log("In function containsDomain " + JSON.stringify(list));
+	$debug_ON && console.log("In function containsDomain " + JSON.stringify(list));
 	try {
 		for (var i = 0; i < list.length; i++){
-			console.log(list[i].domain_id);
-			console.log(domain);
+			$debug_ON && console.log(list[i].domain_id);
+			$debug_ON && console.log(domain);
 			if (list[i].domain_id === domain){
 				return true;
 			}
 		}
 	} catch (e) {
-		console.log(e);
+		$debug_ON && console.log(e);
 		return false;
 	}
 	// Return false by default
 	return false;
 };
 function containsItem(item, list){
-	console.log("In funciton containsItem " + JSON.stringify(list));
+	$debug_ON && console.log("In funciton containsItem " + JSON.stringify(list));
 	try {
 		for (var i = 0; i < list.length; i++){
 			if (list[i] === item){
@@ -1250,7 +1290,7 @@ function containsItem(item, list){
 			}
 		}
 	} catch (e){
-		console.log(e);
+		$debug_ON && console.log(e);
 		return false;
 	}
 	// Return false by default
@@ -1271,19 +1311,19 @@ sending messages a bit easier in our program:
 **/
 port.onMessage.addListener(
 	function(msg) {
-		for(key in msg){			
-			console.log("MSG $Key is: " + key); 
-			console.log("coursera_browse.js Received message: " + msg[key]);
+		for(var key in msg){			
+			$debug_ON && console.log("MSG $Key is: " + key); 
+			$debug_ON && console.log("coursera_browse.js Received message: " + msg[key]);
 			if (key == "notification"){
 				// skip
 			} else if (key == "request"){
 				// skip
 			} else if (key == "response"){
-				if(msg[key] == "0_browse_state"){
+				if(msg[key] == "0_browse_state" || msg[key] == "0_last_domains"){
 					// Load our default page of Coursera Domains
 					courseraBrowse.getAllDomains(
 						function(){
-							console.log("Got allDomains");
+							$debug_ON && console.log("Got allDomains");
 						}
 					);					
 				}
@@ -1291,50 +1331,50 @@ port.onMessage.addListener(
 				// skip
 			} else if (key == "browseStateUpdate"){
 				port.postMessage({acknowledge:'browse_state update received'});
-				console.log("!~~~~coursera_browse.js has received browse_state message~~~~!");
+				$debug_ON && console.log("!~~~~coursera_browse.js has received browse_state message~~~~!");
 				browse_state[0] = JSON.parse(msg[key]);
-				console.log("JSON parsed browse_state msg: " + browse_state[0].courseraDiv);
+				$debug_ON && console.log("JSON parsed browse_state msg: " + browse_state[0].courseraDiv);
 				
 				// Set our HTML to the data sent
 				$('#courseraDiv').html(browse_state[0].courseraDiv);
 				$('#courseraDiv').show();
 			} else if (key == "linkStateUpdate"){
 				port.postMessage({acknowledge:'link_state update received'});
-				console.log("!~~~~coursera_browse.js has received link_state message~~~~!");
+				$debug_ON && console.log("!~~~~coursera_browse.js has received link_state message~~~~!");
 				link_listeners[0] = JSON.parse(msg[key]);
-				console.log("JSON parsed link_state msg 'location': " + link_listeners[0].location);
+				$debug_ON && console.log("JSON parsed link_state msg 'location': " + link_listeners[0].location);
 				
 				// Update our listeners
-				console.log("...initiating Listener update!...");
+				$debug_ON && console.log("...initiating Listener update!...");
 				// Call our updateLinkListener function
 				courseraBrowse.updateLinkListeners(link_listeners, function (response){
 					if(response == 0){
-						console.log("Successfully updated LinkListeners!");
+						$debug_ON && console.log("Successfully updated LinkListeners!");
 					} else {
-						console.log("ERROR updating LinkListeners!: " + response);
+						$debug_ON && console.log("ERROR updating LinkListeners!: " + response);
 					}
 				});
 			} else if (key == "lastDomainsUpdate"){
 				port.postMessage({acknowledge:'last_domains update received'});
-				console.log("!~~~~coursera_browse.js has received last_domains message~~~~!");
+				$debug_ON && console.log("!~~~~coursera_browse.js has received last_domains message~~~~!");
 				// Update our domains
-				console.log("...initiating Domain update!...");				
+				$debug_ON && console.log("...initiating Domain update!...");				
 				domains = JSON.parse(msg[key]);
-				console.log("JSON parsed last_domains msg: " + domains);
+				$debug_ON && console.log("JSON parsed last_domains msg: " + domains);
 			} else if (key == "paginationStateUpdate"){
 				port.postMessage({acknowledge:'pagination_state update received'});
-				console.log("!****coursera.browse.js has received pagination_state message****!");
+				$debug_ON && console.log("!****coursera.browse.js has received pagination_state message****!");
 				pagination_state.next_link[0] = JSON.parse(msg[key]);
-				console.log("JSON parsed pagination_state msg: " + pagination_state.next_link[0]);
+				$debug_ON && console.log("JSON parsed pagination_state msg: " + pagination_state.next_link[0]);
 				
 				// Update our pagination state links
-				console.log("...initiating Pagination update!...");
+				$debug_ON && console.log("...initiating Pagination update!...");
 				// Call our updatePaginationState function
 				courseraBrowse.updatePaginationState(pagination_state, function (response){
 					if(response == 0){
-						console.log("Successfully updated PaginationState!");
+						$debug_ON && console.log("Successfully updated PaginationState!");
 					} else {
-						console.log("ERROR updating PaginationState!: " + response);
+						$debug_ON && console.log("ERROR updating PaginationState!: " + response);
 					}
 				});
 			}			
@@ -1357,7 +1397,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Commented this out, since we now call getAllDomains() from our messaging above!
 	/**courseraBrowse.getAllDomains(
 		function(){
-			console.log("Got allDomains");
+			$debug_ON && console.log("Got allDomains");
 		}
 	);**/	
 });
