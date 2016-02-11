@@ -1,5 +1,5 @@
 /**
-CourseraBrowse v: 0.2.0	|	02/10/2016
+CourseraBrowse v: 0.2.1	|	02/10/2016
 ----------------------------------------------------------
 A Chrome Extension that allows browsing of Coursera course
 offerings utilizing the publicly available API:
@@ -35,10 +35,15 @@ version: 0.1.0	|	05/05/2014
 
 version: 0.2.0	|	02/10/2016
 	: Adapted to latest Coursera API changes	@nathandh
+
+version: 0.2.1	|	02/10/2016
+	: Fixed INSTALL/UPDATE issue with 			@nathandh
+      clearing local storage to prevent
+	  potential extension load errors/problems
 **/
 
 // Our communications port
-var port = chrome.extension.connect({name: "...CourseraBrowse ver: 0.2.0..."});
+var port = chrome.extension.connect({name: "...CourseraBrowse ver: 0.2.1..."});
 
 // A globals array of objects to store our retrieved DOMAIN values
 var domains = [];	// Previously was CATEGORIES

@@ -3,7 +3,7 @@
 
   "name": "CourseraBrowse",
   "description": "Browse Coursera course offerings and information through a popup Chrome extension. No need to leave your current page!",
-  "version": "0.2.0",
+  "version": "0.2.1",
    
   "background": {
 	"scripts": [
