@@ -17,5 +17,10 @@ Developed by: Nathan D. Hernandez
 
 Initial Release:  CourseraBrowse v: 0.1.0	|	05/05/2014
 ----------------------------------------------------------
+2016 Revision 1:  CourseraBrowse v: 0.2.0	|	02/10/2016
+
+Brought majority up to date with Coursera's NEW Api changes (v2).
+Additionally implemented initial Pagination support for performance and User Experience improvements.
+
 Downloadable at:
 https://chrome.google.com/webstore/detail/courserabrowse/npcmfobkdnjngccjfejopolmlapblfem			  
